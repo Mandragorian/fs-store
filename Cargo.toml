@@ -1,5 +1,5 @@
 [package]
-name = "storage"
+name = "fs-store"
 version = "0.1.0"
 authors = ["mandragore"]
 edition = "2018"
