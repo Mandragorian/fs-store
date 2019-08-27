@@ -24,6 +24,10 @@ impl fmt::Display for StorableRestoreError {
 
 impl StdError for StorableRestoreError {}
 
+/// A type that can be stored
+///
+/// Types implementing `Storable` are able to write themselves in a writer,
+/// or deserialize themselves from a reader.
 pub trait Storable<W, R>
 where
     W: Write,
