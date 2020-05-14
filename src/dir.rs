@@ -47,6 +47,7 @@ impl From<io::Error> for Error {
 type BufReadFile = BufReader<File>;
 type BufWriteFile = BufWriter<File>;
 
+/// A storage that stores each entry in a file inside a directory
 #[derive(Debug, Eq, PartialEq)]
 pub struct DirStorage<T>
 where
@@ -69,12 +70,25 @@ impl<T> DirStorage<T>
 where
     T: Storable<BufWriteFile, BufReadFile>,
 {
+
+    /// Constructs a new `DirStorage` from a `HashMap`.
     pub fn new(storage: HashMap<String, T>) -> DirStorage<T> {
         DirStorage {
             storage,
         }
     }
 
+    /// Tries to create a new `DirStorage` from a path.
+    ///
+    /// `DirStorage` will try to read all the files in the directory specified by
+    /// `path_str`, ignoring all directories. For each file found, it will try to
+    /// restore an instance of type `T`, using the `Storable` trait.
+    ///
+    /// If all files are able to be restored successfully, then the returned `DirStorage`
+    /// will contain all the restored instances of `T`, using their filename as a key.
+    /// The file name does not include `path_str`.
+    ///
+    /// If even one file fails, then an `Error` is returned.
     pub fn restore(path_str: &str) -> Result<DirStorage<T>, Error> {
         let mut storage: HashMap<String, T> = HashMap::new();
         let path = Path::new(path_str);
@@ -85,6 +99,8 @@ where
                 if entry.path().is_dir() {
                     continue;
                 }
+                // XXX: If one file fails to be opened, or be restored, then the whole
+                // operation also fails. Maybe it would be better if errors are ignored?
                 let file = File::open(file_path)?;
                 let reader = BufReader::new(file);
                 let object = Storable::<BufWriteFile, BufReadFile>::restore(reader).map_err(|e| {
@@ -97,6 +113,10 @@ where
         Ok(dirstor)
     }
 
+    /// Tries to store a `DirStorage` instance to the given directory.
+    ///
+    /// `DirStorage` will try to store every item it contains to directory specified
+    /// by `dir_path_str`. It will use the key as a file name.
     pub fn store<D>(&self, dir_path_str: D) -> Result<(), Error>
     where
         D: AsRef<str>,
@@ -107,6 +127,8 @@ where
         Ok(())
     }
 
+    /// Tries to store item associated with key `filename`, to the directory specified
+    /// in `dir_path_string`, using `filename` as the file name.
     pub fn store_single<S, F>(&self,  dir_path_string: F, filename: S) -> Result<(), Error>
     where
         S: AsRef<str>,
@@ -130,6 +152,7 @@ where
             .map_err(|e| Error::RestoreError(new_path.display().to_string(), e.0))
     }
 
+    /// Returns item associated with key `k`, if present.
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&T>
     where
         String: Borrow<Q>,
@@ -138,6 +161,7 @@ where
         self.storage.get(k)
     }
 
+    /// Returns a mutable reference to the item associated with key `k`, if present.
     pub fn get_mut<Q: ?Sized>(&mut self, k: &Q) -> Option<&mut T>
     where
         String: Borrow<Q>,
@@ -146,6 +170,10 @@ where
         self.storage.get_mut(k)
     }
 
+    /// Inserts a new item `v` associated with key `k`.
+    ///
+    /// If `DirStorage` already contained an item associated with `k`, it will be removed
+    /// and returned.
     pub fn insert<S>(&mut self, k: S, v: T) -> Option<T>
     where
         S: Into<String>
@@ -153,6 +181,7 @@ where
         self.storage.insert(k.into(), v)
     }
 
+    /// Returns true if the storage contains an item associated with `k`.
     pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool
     where
         String: Borrow<Q>,
