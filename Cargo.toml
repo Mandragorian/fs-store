@@ -1,7 +1,10 @@
 [package]
-name = "fs-store"
+name = "soter"
+license = "GPL-3.0"
 version = "0.1.0"
 authors = ["mandragore"]
 edition = "2018"
+description = "Simple mechanisms for data storage"
+repository = "https://github.com/Mandragorian/soter"
 
 [dependencies]
