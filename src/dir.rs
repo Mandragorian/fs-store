@@ -99,6 +99,11 @@ where
                 if entry.path().is_dir() {
                     continue;
                 }
+
+                if entry.file_name().to_str().map(|s| s.starts_with(".")).unwrap_or(true) {
+                    continue;
+                }
+
                 // XXX: If one file fails to be opened, or be restored, then the whole
                 // operation also fails. Maybe it would be better if errors are ignored?
                 let file = File::open(file_path)?;
