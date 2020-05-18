@@ -8,3 +8,6 @@ description = "Simple mechanisms for data storage"
 repository = "https://github.com/Mandragorian/soter"
 
 [dependencies]
+
+[dev-dependencies]
+tempdir = "0.3.7"
